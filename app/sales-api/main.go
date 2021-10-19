@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"expvar"
 	"fmt"
 	"github.com/ardanlabs/conf"
@@ -9,6 +10,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -83,7 +86,41 @@ func run(log *log.Logger) error {
 		}
 	}()
 
-	select {}
+	// Start API Service
+
+	log.Printf("main: Initializing API support")
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	api := http.Server{
+		Addr: cfg.Web.APIHost,
+		//Handler:      handlers.API(build, shutdown, log, db, auth),
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
+	}
+
+	serverErrors := make(chan error, 1)
+
+	go func() {
+		log.Printf("main: API listening on %s", api.Addr)
+		serverErrors <- api.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErrors:
+		return errors.Wrap(err, "server error")
+	case sig := <-shutdown:
+		log.Printf("main: %v : Start shutdown", sig)
+
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		defer cancel()
+
+		if err := api.Shutdown(ctx); err != nil {
+			api.Close()
+			return errors.Wrap(err, "could not stop server gracefully")
+		}
+	}
 
 	return nil
 }
