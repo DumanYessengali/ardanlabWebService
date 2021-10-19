@@ -3,9 +3,11 @@ package web
 import (
 	"context"
 	"github.com/dimfeld/httptreemux"
+	"github.com/google/uuid"
 	"net/http"
 	"os"
 	"syscall"
+	"time"
 )
 
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
@@ -29,10 +31,28 @@ func (a *App) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
 
+type ctxKey int
+
+const KeyValue ctxKey = 1
+
+type Values struct {
+	TraceID    string
+	Now        time.Time
+	StatusCode int
+}
+
 // Handle ...
 func (a *App) Handle(method string, path string, handler Handler) {
 	h := func(w http.ResponseWriter, r *http.Request) {
-		if err := handler(r.Context(), w, r); err != nil {
+
+		v := Values{
+			TraceID: uuid.New().String(),
+			Now:     time.Now(),
+		}
+
+		ctx := context.WithValue(r.Context(), KeyValue, &v)
+
+		if err := handler(ctx, w, r); err != nil {
 			a.SignalShutdown()
 			return
 		}
