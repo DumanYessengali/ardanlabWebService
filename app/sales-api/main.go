@@ -6,10 +6,13 @@ import (
 	"github.com/ardanlabs/conf"
 	"github.com/pkg/errors"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 )
 
+//expvarmon -ports=":4000" -vars="build,requests,goroutines,error,mem:memstats.Alloc"
 func main() {
 	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	if err := run(log); err != nil {
@@ -68,6 +71,19 @@ func run(log *log.Logger) error {
 	}
 
 	log.Printf("main: Config : \n%v\n", out)
+
+	// Start Debug Service
+
+	log.Println("main: Initializing debugging support")
+
+	go func() {
+		log.Printf("main: Debug Listening %s", cfg.Web.DebugHost)
+		if err := http.ListenAndServe(cfg.Web.DebugHost, http.DefaultServeMux); err != nil {
+			log.Printf("main: Debug Listener closed : %v", err)
+		}
+	}()
+
+	select {}
 
 	return nil
 }
