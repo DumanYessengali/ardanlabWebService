@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"github.com/dimfeld/httptreemux"
 	"log"
 	"net/http"
@@ -11,16 +10,11 @@ import (
 func API(build string, shutdown chan os.Signal, log *log.Logger) *httptreemux.ContextMux {
 	tm := httptreemux.NewContextMux()
 
-	h := func(w http.ResponseWriter, r *http.Request) {
-		status := struct {
-			Status string
-		}{
-			Status: "OK",
-		}
-		json.NewEncoder(w).Encode(status)
+	check := check{
+		log: log,
 	}
 
-	tm.Handle(http.MethodGet, "/test", h)
+	tm.Handle(http.MethodGet, "/test", check.readiness)
 
 	return tm
 }
