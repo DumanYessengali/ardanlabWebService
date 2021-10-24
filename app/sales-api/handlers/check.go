@@ -7,11 +7,11 @@ import (
 	"net/http"
 )
 
-type check struct {
+type Check struct {
 	log *log.Logger
 }
 
-func (c check) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (c Check) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	status := struct {
 		Status string
 	}{
