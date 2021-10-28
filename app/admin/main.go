@@ -6,8 +6,12 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 /*
@@ -15,7 +19,42 @@ import (
 	openssl rsa -pubout -in private.pem -out public.pem
 */
 func main() {
-	keygen()
+	//keygen()
+	tokengen()
+}
+
+func tokengen() {
+	privatePEM, err := ioutil.ReadFile("c:/Users/balmu/go/src/github.com/DumanYessengali/ardanlabWebService/private.pem")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEM)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	claims := struct {
+		jwt.StandardClaims
+		Authorized []string
+	}{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "service project",
+			Subject:   "123456789",
+			ExpiresAt: time.Now().Add(8760 * time.Hour).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		Authorized: []string{"ADMIN"},
+	}
+
+	method := jwt.GetSigningMethod("RS256")
+	tkn := jwt.NewWithClaims(method, claims)
+	tkn.Header["kid"] = "akjfasndio24noifwe-fwejfn-wefnwe-nlnknkl"
+	str, err := tkn.SignedString(privateKey)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println(str)
+
 }
 
 func keygen() {
