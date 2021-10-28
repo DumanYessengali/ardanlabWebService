@@ -16,7 +16,8 @@ import (
 	"time"
 )
 
-//expvarmon -ports=":4000" -vars="build,requests,goroutines,error,mem:memstats.Alloc"
+// expvarmon -ports=":4000" -vars="build,requests,goroutines,error,mem:memstats.Alloc"
+// hey -m GET -c 100 -n 1000000 "http://localhost:3000/readiness"
 func main() {
 	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	if err := run(log); err != nil {
