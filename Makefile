@@ -10,3 +10,6 @@ tidy:
 	go mod tidy
 	go mod vendor
 
+test:
+	go test -v ./... -count=1
+	staticcheck ./...
