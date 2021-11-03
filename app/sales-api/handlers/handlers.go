@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/DumanYessengali/ardanlabWebService/business/auth"
 	"github.com/DumanYessengali/ardanlabWebService/business/mid"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/web"
 	"log"
@@ -8,14 +9,14 @@ import (
 	"os"
 )
 
-func API(build string, shutdown chan os.Signal, log *log.Logger) *web.App {
+func API(build string, shutdown chan os.Signal, log *log.Logger, a *auth.Auth) *web.App {
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
 	check := Check{
 		log: log,
 	}
 
-	app.Handle(http.MethodGet, "/readiness", check.readiness)
+	app.Handle(http.MethodGet, "/readiness", check.readiness, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
 
 	return app
 }

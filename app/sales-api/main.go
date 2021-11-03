@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
 	"expvar"
 	"fmt"
 	"github.com/DumanYessengali/ardanlabWebService/app/sales-api/handlers"
+	"github.com/DumanYessengali/ardanlabWebService/business/auth"
 	"github.com/ardanlabs/conf"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -18,6 +22,7 @@ import (
 
 // expvarmon -ports=":4000" -vars="build,requests,goroutines,error,mem:memstats.Alloc"
 // hey -m GET -c 100 -n 1000000 "http://localhost:3000/readiness"
+//curl -H "Authorization: Bearer ${Token}" http://localhost:3000/readiness
 func main() {
 	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	if err := run(log); err != nil {
@@ -40,6 +45,11 @@ func run(log *log.Logger) error {
 			ReadTimeout     time.Duration `conf:"default:5s"`
 			WriteTimeout    time.Duration `conf:"default:5s"`
 			ShutdownTimeout time.Duration `conf:"default:5s"`
+		}
+		Auth struct {
+			KeyID          string `conf:"default:7b5845ca-3436-444b-a128-4ec59481b23a"`
+			PrivateKeyFile string `conf:"default:c:/Users/balmu/go/src/github.com/DumanYessengali/ardanlabWebService/private.pem"`
+			Algorithm      string `conf:"default:RS256"`
 		}
 	}
 
@@ -77,6 +87,28 @@ func run(log *log.Logger) error {
 
 	log.Printf("main: Config : \n%v\n", out)
 
+	log.Println("main : Started : Initializing authentication support")
+
+	privatePEM, err := ioutil.ReadFile(cfg.Auth.PrivateKeyFile)
+
+	if err != nil {
+		return errors.Wrap(err, "reading auth private key")
+	}
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEM)
+
+	lookup := func(kid string) (*rsa.PublicKey, error) {
+		switch kid {
+		case cfg.Auth.KeyID:
+			return &privateKey.PublicKey, nil
+		}
+		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
+	}
+
+	auth, err := auth.New(cfg.Auth.Algorithm, lookup, auth.Keys{cfg.Auth.KeyID: privateKey})
+	if err != nil {
+		return errors.Wrap(err, "constructing auth")
+	}
 	// Start Debug Service
 
 	log.Println("main: Initializing debugging support")
@@ -97,7 +129,7 @@ func run(log *log.Logger) error {
 
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      handlers.API(build, shutdown, log),
+		Handler:      handlers.API(build, shutdown, log, auth),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

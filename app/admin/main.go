@@ -35,7 +35,7 @@ func tokengen() {
 
 	claims := struct {
 		jwt.StandardClaims
-		Authorized []string
+		Roles []string `json:"roles"`
 	}{
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    "service project",
@@ -43,12 +43,12 @@ func tokengen() {
 			ExpiresAt: time.Now().Add(8760 * time.Hour).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
-		Authorized: []string{"ADMIN"},
+		Roles: []string{"ADMIN"},
 	}
 
 	method := jwt.GetSigningMethod("RS256")
 	tkn := jwt.NewWithClaims(method, claims)
-	tkn.Header["kid"] = "akjfasndio24noifwe-fwejfn-wefnwe-nlnknkl"
+	tkn.Header["kid"] = "7b5845ca-3436-444b-a128-4ec59481b23a"
 	str, err := tkn.SignedString(privateKey)
 	if err != nil {
 		log.Fatalln(err)
