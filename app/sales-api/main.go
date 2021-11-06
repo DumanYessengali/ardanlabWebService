@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/DumanYessengali/ardanlabWebService/app/sales-api/handlers"
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
+
 	"github.com/ardanlabs/conf"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
@@ -48,7 +49,7 @@ func run(log *log.Logger) error {
 		}
 		Auth struct {
 			KeyID          string `conf:"default:7b5845ca-3436-444b-a128-4ec59481b23a"`
-			PrivateKeyFile string `conf:"default:c:/Users/balmu/go/src/github.com/DumanYessengali/ardanlabWebService/private.pem"`
+			PrivateKeyFile string `conf:"default:/service/private.pem"`
 			Algorithm      string `conf:"default:RS256"`
 		}
 	}

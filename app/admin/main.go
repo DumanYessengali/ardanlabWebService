@@ -24,7 +24,7 @@ func main() {
 }
 
 func tokengen() {
-	privatePEM, err := ioutil.ReadFile("c:/Users/balmu/go/src/github.com/DumanYessengali/ardanlabWebService/private.pem")
+	privatePEM, err := ioutil.ReadFile("/home/doom/GolandProjects/ardanlabWebService/private.pem")
 	if err != nil {
 		log.Fatalln(err)
 	}

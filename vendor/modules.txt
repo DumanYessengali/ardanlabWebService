@@ -19,6 +19,8 @@ github.com/go-playground/universal-translator
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
 github.com/go-playground/validator/v10/translations/en
+# github.com/google/go-cmp v0.5.2
+## explicit; go 1.8
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
