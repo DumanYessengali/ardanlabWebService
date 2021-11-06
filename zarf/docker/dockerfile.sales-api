@@ -1,4 +1,4 @@
-FROM golang:1.15.6 as build_sales-api
+FROM golang:1.17 as build_sales-api
 ENV CGO_ENABLED 0
 ARG VCS_REF
 
@@ -6,9 +6,6 @@ RUN mkdir -p /service
 
 WORKDIR /service
 COPY . .
-
-WORKDIR /service/app/sales-admin
-RUN go build -ldflags "-X main.build=${VCS_REF}"
 
 WORKDIR /service/app/sales-api
 RUN go build -ldflags "-X main.build=${VCS_REF}"
