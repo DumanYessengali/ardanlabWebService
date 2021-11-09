@@ -2,28 +2,36 @@ package handlers
 
 import (
 	"context"
+	"github.com/DumanYessengali/ardanlabWebService/foundation/database"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/web"
-	"log"
+	"github.com/jmoiron/sqlx"
 	"net/http"
 	"os"
 )
 
-type Check struct {
+type CheckGroup struct {
 	build string
-	log   *log.Logger
+	db    *sqlx.DB
 }
 
-func (c Check) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	status := struct {
-		Status string
-	}{
-		Status: "OK",
+func (cg CheckGroup) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	status := "ok"
+	statusCode := http.StatusOK
+	if err := database.StatusCheck(ctx, cg.db); err != nil {
+		status = "db not ready"
+		statusCode = http.StatusInternalServerError
 	}
 
-	return web.Respond(ctx, w, status, http.StatusOK)
+	health := struct {
+		Status string `json:"status"`
+	}{
+		Status: status,
+	}
+
+	return web.Respond(ctx, w, health, statusCode)
 }
 
-func (c Check) liveness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (cg CheckGroup) liveness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	host, err := os.Hostname()
 	if err != nil {
 		host = "unavailable"
@@ -39,7 +47,7 @@ func (c Check) liveness(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		Namespace string `json:"namespace,omitempty"`
 	}{
 		Status:    "up",
-		Build:     c.build,
+		Build:     cg.build,
 		Host:      host,
 		Pod:       os.Getenv("KUBERNETES_PODNAME"),
 		PodIP:     os.Getenv("KUBERNETES_NAMESPACE_POD_IP"),

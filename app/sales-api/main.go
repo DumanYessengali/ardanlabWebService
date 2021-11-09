@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/DumanYessengali/ardanlabWebService/app/sales-api/handlers"
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
+	"github.com/DumanYessengali/ardanlabWebService/foundation/database"
 
 	"github.com/ardanlabs/conf"
 	"github.com/dgrijalva/jwt-go"
@@ -46,6 +47,13 @@ func run(log *log.Logger) error {
 			ReadTimeout     time.Duration `conf:"default:5s"`
 			WriteTimeout    time.Duration `conf:"default:5s"`
 			ShutdownTimeout time.Duration `conf:"default:5s"`
+		}
+		DB struct {
+			User       string `conf:"default:postgres"`
+			Password   string `conf:"default:postgres,noprint"`
+			Host       string `conf:"default:db"`
+			Name       string `conf:"default:postgres"`
+			DisableTLS bool   `conf:"default:true"`
 		}
 		Auth struct {
 			KeyID          string `conf:"default:7b5845ca-3436-444b-a128-4ec59481b23a"`
@@ -110,6 +118,27 @@ func run(log *log.Logger) error {
 	if err != nil {
 		return errors.Wrap(err, "constructing auth")
 	}
+
+	log.Println("m: Initializing database support")
+
+	cfgDB := database.Config{
+		User:       cfg.DB.User,
+		Password:   cfg.DB.Password,
+		Host:       cfg.DB.Host,
+		Name:       cfg.DB.Name,
+		DisableTLS: cfg.DB.DisableTLS,
+	}
+
+	db, err := database.Open(cfgDB)
+	if err != nil {
+		return errors.Wrap(err, "connecting to db")
+	}
+
+	defer func() {
+		log.Printf("main: Database Stopping : %s", cfg.DB.Host)
+		db.Close()
+	}()
+
 	// Start Debug Service
 
 	log.Println("main: Initializing debugging support")
@@ -130,7 +159,7 @@ func run(log *log.Logger) error {
 
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      handlers.API(build, shutdown, log, auth),
+		Handler:      handlers.API(build, shutdown, log, auth, db),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

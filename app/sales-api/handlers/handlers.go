@@ -4,22 +4,23 @@ import (
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
 	"github.com/DumanYessengali/ardanlabWebService/business/mid"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/web"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 	"os"
 )
 
-func API(build string, shutdown chan os.Signal, log *log.Logger, a *auth.Auth) *web.App {
+func API(build string, shutdown chan os.Signal, log *log.Logger, a *auth.Auth, db *sqlx.DB) *web.App {
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
-	check := Check{
+	cg := CheckGroup{
 		build: build,
-		log:   log,
+		db:    db,
 	}
 
-	//app.Handle(http.MethodGet, "/readiness", check.readiness, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
-	//app.Handle(http.MethodGet, "/liveness", check.readiness, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
-	app.Handle(http.MethodGet, "/readiness", check.readiness)
-	app.Handle(http.MethodGet, "/liveness", check.liveness)
+	//app.Handle(http.MethodGet, "/readiness", cg.readiness, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
+	//app.Handle(http.MethodGet, "/liveness", cg.readiness, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/readiness", cg.readiness)
+	app.Handle(http.MethodGet, "/liveness", cg.liveness)
 	return app
 }
