@@ -20,7 +20,7 @@ type Claims struct {
 	Roles []string `json:"roles"`
 }
 
-func (c Claims) Authorize(roles ...string) bool {
+func (c Claims) Authorized(roles ...string) bool {
 	for _, has := range c.Roles {
 		for _, want := range roles {
 			if has == want {

@@ -46,7 +46,7 @@ func Authorize(log *log.Logger, roles ...string) web.Middleware {
 			if !ok {
 				return errors.New("claims missing from context: HasRole called without/before Authentication")
 			}
-			if !claims.Authorize(roles...) {
+			if !claims.Authorized(roles...) {
 				log.Println("mid: authorize: claims: %v exp: %v", claims.Roles, roles)
 				return ErrForbidden
 			}
