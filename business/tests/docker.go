@@ -53,7 +53,7 @@ func startContainer(t *testing.T, image string, port string, args ...string) *Co
 	return &c
 }
 
-func stopCoiner(t *testing.T, id string) {
+func stopContainer(t *testing.T, id string) {
 	if err := exec.Command("docker", "stop", id).Run(); err != nil {
 		t.Fatalf("could not stop container: %v", err)
 	}
