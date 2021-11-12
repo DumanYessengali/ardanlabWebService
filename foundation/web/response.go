@@ -9,7 +9,7 @@ import (
 
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
 
-	v, ok := ctx.Value(KeyValue).(*Values)
+	v, ok := ctx.Value(KeyValues).(*Values)
 	if !ok {
 		return NewShutdownError("web value missing from context")
 	}

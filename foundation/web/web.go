@@ -35,7 +35,7 @@ func (a *App) SignalShutdown() {
 
 type ctxKey int
 
-const KeyValue ctxKey = 1
+const KeyValues ctxKey = 1
 
 type Values struct {
 	TraceID    string
@@ -57,7 +57,7 @@ func (a *App) Handle(method string, path string, handler Handler, mw ...Middlewa
 			Now:     time.Now(),
 		}
 
-		ctx := context.WithValue(r.Context(), KeyValue, &v)
+		ctx := context.WithValue(r.Context(), KeyValues, &v)
 
 		if err := handler(ctx, w, r); err != nil {
 			a.SignalShutdown()
