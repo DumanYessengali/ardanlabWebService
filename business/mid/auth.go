@@ -3,6 +3,7 @@ package mid
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/web"
 	"log"
@@ -47,8 +48,10 @@ func Authorize(log *log.Logger, roles ...string) web.Middleware {
 				return errors.New("claims missing from context: HasRole called without/before Authentication")
 			}
 			if !claims.Authorized(roles...) {
-				log.Println("mid: authorize: claims: %v exp: %v", claims.Roles, roles)
-				return ErrForbidden
+				return web.NewRequestError(
+					fmt.Errorf("you are not authorized for that action: claims: %v exp: %v", claims.Roles, roles),
+					http.StatusForbidden,
+				)
 			}
 			return handler(ctx, w, r)
 		}
