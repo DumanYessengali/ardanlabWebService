@@ -130,7 +130,7 @@ func NewIntegration(t *testing.T) *Test {
 		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
 	}
 
-	auth, err := auth.New("RSA256", lookup, auth.Keys{kidID: privateKey})
+	auth, err := auth.New("RS256", lookup, auth.Keys{kidID: privateKey})
 	if err != nil {
 		t.Fatal(err)
 	}

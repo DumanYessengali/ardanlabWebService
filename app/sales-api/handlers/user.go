@@ -25,12 +25,12 @@ func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Re
 	params := web.Params(r)
 	pageNumber, err := strconv.Atoi(params["page"])
 	if err != nil {
-		return web.NewRequestError(fmt.Errorf("invalid page format: %s", params["page"]), http.StatusNotFound)
+		return web.NewRequestError(fmt.Errorf("invalid page format: %s", params["page"]), http.StatusBadRequest)
 	}
 
 	rowsPerPage, err := strconv.Atoi(params["rows"])
 	if err != nil {
-		return web.NewRequestError(fmt.Errorf("invalid rows format: %s", params["rows"]), http.StatusNotFound)
+		return web.NewRequestError(fmt.Errorf("invalid rows format: %s", params["rows"]), http.StatusBadRequest)
 	}
 
 	users, err := ug.user.Query(ctx, v.TraceID, pageNumber, rowsPerPage)
@@ -86,8 +86,9 @@ func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	usr, err := ug.user.Create(ctx, v.TraceID, nu, v.Now)
 	if err != nil {
-		return errors.Wrapf(err, "user: %+v", &usr)
+		return errors.Wrapf(err, "User: %+v", &usr)
 	}
+
 	return web.Respond(ctx, w, usr, http.StatusCreated)
 }
 
