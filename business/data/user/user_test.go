@@ -12,7 +12,7 @@ import (
 )
 
 func TestUser(t *testing.T) {
-	log, db, teardown := tests.NewUint(t)
+	log, db, teardown := tests.NewUnit(t)
 	t.Cleanup(teardown)
 
 	u := user.New(log, db)
