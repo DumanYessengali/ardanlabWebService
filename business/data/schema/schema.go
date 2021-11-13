@@ -41,12 +41,4 @@ CREATE TABLE books (
 	PRIMARY KEY (book_id)
 );`,
 	},
-	{
-		Version:     2.1,
-		Description: "Alter table books with user column",
-		Script: `
-ALTER TABLE books
-	ADD COLUMN user_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
-`,
-	},
 }

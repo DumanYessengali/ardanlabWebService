@@ -49,8 +49,8 @@ func (b Book) Create(ctx context.Context, traceID string, nb NewBook, now time.T
 	return book, nil
 }
 
-func (b Book) Update(ctx context.Context, traceID string, claims auth.Claims, userID, bookID string, bu UpdateBook, now time.Time) error {
-	book, err := b.QueryByID(ctx, traceID, claims, userID, bookID)
+func (b Book) Update(ctx context.Context, traceID string, claims auth.Claims, bookID string, bu UpdateBook, now time.Time) error {
+	book, err := b.QueryByID(ctx, traceID, claims, bookID)
 	if err != nil {
 		return err
 	}
@@ -115,30 +115,27 @@ func (b Book) Query(ctx context.Context, traceID string, pageNumber, rowsPerPage
 	return book, nil
 }
 
-func (b Book) QueryByID(ctx context.Context, traceID string, claims auth.Claims, userID, bookID string) (Info, error) {
-	if _, err := uuid.Parse(userID); err != nil {
-		return Info{}, errors.ErrInvalidID
-	}
+func (b Book) QueryByID(ctx context.Context, traceID string, claims auth.Claims, bookID string) (Info, error) {
 	if _, err := uuid.Parse(bookID); err != nil {
 		return Info{}, errors.ErrInvalidID
 	}
 
-	if !claims.Authorized(auth.RoleAdmin) && claims.Subject != userID {
+	if !claims.Authorized(auth.RoleAdmin) {
 		return Info{}, errors.ErrForbidden
 	}
 
-	const q = `SELECT * FROM books WHERE user_id = $1 AND book_id = $2`
+	const q = `SELECT * FROM books WHERE book_id = $1`
 
 	b.log.Printf("%s : %s query : %s", traceID, "book.QueryByID",
-		database.Log(q, userID),
+		database.Log(q, bookID),
 	)
 
 	var book Info
-	if err := b.db.GetContext(ctx, &book, q, userID, bookID); err != nil {
+	if err := b.db.GetContext(ctx, &book, q, bookID); err != nil {
 		if err == sql.ErrNoRows {
 			return Info{}, errors.ErrNotFound
 		}
-		return Info{}, errs.Wrapf(err, "selecting user %q and book %q", userID, bookID)
+		return Info{}, errs.Wrapf(err, "selecting book %q", bookID)
 	}
 
 	return book, nil
