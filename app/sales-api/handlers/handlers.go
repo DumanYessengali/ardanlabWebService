@@ -35,5 +35,15 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, a *auth.Auth, d
 	app.Handle(http.MethodPut, "/users/:id", ug.update, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
 	app.Handle(http.MethodDelete, "/users/:id", ug.delete, mid.Authenticate(a), mid.Authorize(log, auth.RoleAdmin))
 
+	//bg := bookGroup{
+	//	book: book.New(log, db),
+	//	auth: a,
+	//}
+	//app.Handle(http.MethodGet, "/books/:page/:rows", bg.query, mid.Authenticate(a))
+	//app.Handle(http.MethodGet, "/books/:id", bg.queryByID, mid.Authenticate(a))
+	//app.Handle(http.MethodPost, "/books", bg.create, mid.Authenticate(a))
+	//app.Handle(http.MethodPut, "/books/:id", bg.update, mid.Authenticate(a))
+	//app.Handle(http.MethodDelete, "/books/:id", bg.delete, mid.Authenticate(a))
+
 	return app
 }

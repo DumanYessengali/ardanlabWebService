@@ -29,37 +29,23 @@ CREATE TABLE users (
 	},
 	{
 		Version:     1.2,
-		Description: "Create table products",
+		Description: "Create table books",
 		Script: `
-CREATE TABLE products (
-	product_id   UUID,
-	name         TEXT,
-	cost         INT,
-	quantity     INT,
+CREATE TABLE books (
+	book_id   	UUID,
+	title       TEXT,
+	description TEXT,
+	user_id     UUID,
 	date_created TIMESTAMP,
 	date_updated TIMESTAMP,
-	PRIMARY KEY (product_id)
-);`,
-	},
-	{
-		Version:     1.3,
-		Description: "Create table sales",
-		Script: `
-CREATE TABLE sales (
-	sale_id      UUID,
-	product_id   UUID,
-	quantity     INT,
-	paid         INT,
-	date_created TIMESTAMP,
-	PRIMARY KEY (sale_id),
-	FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+	PRIMARY KEY (book_id)
 );`,
 	},
 	{
 		Version:     2.1,
-		Description: "Alter table products with user column",
+		Description: "Alter table books with user column",
 		Script: `
-ALTER TABLE products
+ALTER TABLE books
 	ADD COLUMN user_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
 `,
 	},

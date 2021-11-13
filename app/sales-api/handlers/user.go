@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
 	"github.com/DumanYessengali/ardanlabWebService/business/data/user"
+	"github.com/DumanYessengali/ardanlabWebService/business/errors"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/web"
-	"github.com/pkg/errors"
+
+	errs "github.com/pkg/errors"
 	"net/http"
 	"strconv"
 )
@@ -35,7 +37,7 @@ func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	users, err := ug.user.Query(ctx, v.TraceID, pageNumber, rowsPerPage)
 	if err != nil {
-		return errors.Wrap(err, "unable to query for users")
+		return errs.Wrap(err, "unable to query for users")
 	}
 
 	return web.Respond(ctx, w, users, http.StatusOK)
@@ -49,7 +51,7 @@ func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *htt
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
 	if !ok {
-		return errors.New("claims missing from context")
+		return errs.New("claims missing from context")
 	}
 
 	params := web.Params(r)
@@ -58,14 +60,14 @@ func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *htt
 	if err != nil {
 		if err != nil {
 			switch err {
-			case user.ErrInvalidID:
+			case errors.ErrInvalidID:
 				return web.NewRequestError(err, http.StatusBadRequest)
-			case user.ErrNotFound:
+			case errors.ErrNotFound:
 				return web.NewRequestError(err, http.StatusNotFound)
-			case user.ErrForbidden:
+			case errors.ErrForbidden:
 				return web.NewRequestError(err, http.StatusForbidden)
 			default:
-				return errors.Wrapf(err, "ID: %s", params["id"])
+				return errs.Wrapf(err, "ID: %s", params["id"])
 			}
 		}
 	}
@@ -81,12 +83,12 @@ func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	var nu user.NewUser
 	if err := web.Decode(r, &nu); err != nil {
-		return errors.Wrapf(err, "unable to decode payload")
+		return errs.Wrapf(err, "unable to decode payload")
 	}
 
 	usr, err := ug.user.Create(ctx, v.TraceID, nu, v.Now)
 	if err != nil {
-		return errors.Wrapf(err, "User: %+v", &usr)
+		return errs.Wrapf(err, "User: %+v", &usr)
 	}
 
 	return web.Respond(ctx, w, usr, http.StatusCreated)
@@ -100,26 +102,26 @@ func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
 	if !ok {
-		return errors.New("claims missing from context")
+		return errs.New("claims missing from context")
 	}
 
 	var upd user.UpdateUser
 	if err := web.Decode(r, &upd); err != nil {
-		return errors.Wrap(err, "unable to decode payload")
+		return errs.Wrap(err, "unable to decode payload")
 	}
 
 	params := web.Params(r)
 	err := ug.user.Update(ctx, v.TraceID, claims, params["id"], upd, v.Now)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case errors.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case errors.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case errors.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "ID: %s User: %+v", params["id"], &upd)
+			return errs.Wrapf(err, "ID: %s User: %+v", params["id"], &upd)
 		}
 	}
 
@@ -138,14 +140,14 @@ func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.R
 	if err != nil {
 		if err != nil {
 			switch err {
-			case user.ErrInvalidID:
+			case errors.ErrInvalidID:
 				return web.NewRequestError(err, http.StatusBadRequest)
-			case user.ErrNotFound:
+			case errors.ErrNotFound:
 				return web.NewRequestError(err, http.StatusNotFound)
-			case user.ErrForbidden:
+			case errors.ErrForbidden:
 				return web.NewRequestError(err, http.StatusForbidden)
 			default:
-				return errors.Wrapf(err, "ID: %s", params["id"])
+				return errs.Wrapf(err, "ID: %s", params["id"])
 			}
 		}
 	}
@@ -160,18 +162,18 @@ func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	email, pass, ok := r.BasicAuth()
 	if !ok {
-		err := errors.New("must provide email and password in Basic auth")
+		err := errs.New("must provide email and password in Basic auth")
 		return web.NewRequestError(err, http.StatusUnauthorized)
 	}
 
 	claims, err := ug.user.Authenticate(ctx, v.TraceID, v.Now, email, pass)
 	if err != nil {
 		switch err {
-		case user.ErrAuthenticationFailure:
+		case errors.ErrAuthenticationFailure:
 			return web.NewRequestError(err, http.StatusUnauthorized)
 
 		default:
-			return errors.Wrap(err, "authenticating")
+			return errs.Wrap(err, "authenticating")
 		}
 	}
 
@@ -182,7 +184,7 @@ func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 	tkn.Token, err = ug.auth.GenerateToken(params["kid"], claims)
 	if err != nil {
-		return errors.Wrap(err, "generating token")
+		return errs.Wrap(err, "generating token")
 	}
 
 	return web.Respond(ctx, w, tkn, http.StatusOK)

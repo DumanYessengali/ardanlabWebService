@@ -4,21 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
+	"github.com/DumanYessengali/ardanlabWebService/business/errors"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/database"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
+	errs "github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"time"
-)
-
-var (
-	ErrNotFound              = errors.New("not found")
-	ErrInvalidID             = errors.New("ID is not in its proper form")
-	ErrAuthenticationFailure = errors.New("authentication failed")
-	ErrForbidden             = errors.New("attempted action is not allowed")
 )
 
 type User struct {
@@ -36,7 +30,7 @@ func New(log *log.Logger, db *sqlx.DB) User {
 func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.Time) (Info, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(nu.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return Info{}, errors.Wrap(err, "generating password hash")
+		return Info{}, errs.Wrap(err, "generating password hash")
 	}
 
 	usr := Info{
@@ -57,7 +51,7 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 	)
 
 	if _, err := u.db.ExecContext(ctx, q, usr.ID, usr.Name, usr.Email, usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
-		return Info{}, errors.Wrap(err, "inserting user")
+		return Info{}, errs.Wrap(err, "inserting user")
 	}
 	return usr, nil
 }
@@ -80,7 +74,7 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 	if uu.Password != nil {
 		pw, err := bcrypt.GenerateFromPassword([]byte(*uu.Password), bcrypt.DefaultCost)
 		if err != nil {
-			return errors.Wrap(err, "generating password hash")
+			return errs.Wrap(err, "generating password hash")
 		}
 		usr.PasswordHash = pw
 	}
@@ -103,7 +97,7 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 	)
 
 	if _, err = u.db.ExecContext(ctx, q, userID, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
-		return errors.Wrap(err, "updating user")
+		return errs.Wrap(err, "updating user")
 	}
 
 	return nil
@@ -111,7 +105,7 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 
 func (u User) Delete(ctx context.Context, traceID string, userID string) error {
 	if _, err := uuid.Parse(userID); err != nil {
-		return ErrInvalidID
+		return errors.ErrInvalidID
 	}
 	const q = `DELETE FROM users where user_id = $1`
 
@@ -120,7 +114,7 @@ func (u User) Delete(ctx context.Context, traceID string, userID string) error {
 	)
 
 	if _, err := u.db.ExecContext(ctx, q, userID); err != nil {
-		return errors.Wrapf(err, "deleting user %s", userID)
+		return errs.Wrapf(err, "deleting user %s", userID)
 	}
 	return nil
 }
@@ -134,7 +128,7 @@ func (u User) Query(ctx context.Context, traceID string, pageNumber, rowsPerPage
 	users := []Info{}
 
 	if err := u.db.SelectContext(ctx, &users, q, offset, rowsPerPage); err != nil {
-		return nil, errors.Wrap(err, "selecting users")
+		return nil, errs.Wrap(err, "selecting users")
 	}
 
 	return users, nil
@@ -142,10 +136,10 @@ func (u User) Query(ctx context.Context, traceID string, pageNumber, rowsPerPage
 
 func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims, userID string) (Info, error) {
 	if _, err := uuid.Parse(userID); err != nil {
-		return Info{}, ErrInvalidID
+		return Info{}, errors.ErrInvalidID
 	}
 	if !claims.Authorized(auth.RoleAdmin) && claims.Subject != userID {
-		return Info{}, ErrForbidden
+		return Info{}, errors.ErrForbidden
 	}
 
 	const q = `SELECT * FROM users WHERE user_id =$1`
@@ -157,9 +151,9 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 	var usr Info
 	if err := u.db.GetContext(ctx, &usr, q, userID); err != nil {
 		if err == sql.ErrNoRows {
-			return Info{}, ErrNotFound
+			return Info{}, errors.ErrNotFound
 		}
-		return Info{}, errors.Wrapf(err, "selecting user %q", userID)
+		return Info{}, errs.Wrapf(err, "selecting user %q", userID)
 	}
 
 	return usr, nil
@@ -175,13 +169,13 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	var usr Info
 	if err := u.db.GetContext(ctx, &usr, q, email); err != nil {
 		if err == sql.ErrNoRows {
-			return Info{}, ErrNotFound
+			return Info{}, errors.ErrNotFound
 		}
-		return Info{}, errors.Wrapf(err, "selecting user %q", email)
+		return Info{}, errs.Wrapf(err, "selecting user %q", email)
 	}
 
 	if !claims.Authorized(auth.RoleAdmin) && claims.Subject != usr.ID {
-		return Info{}, ErrForbidden
+		return Info{}, errors.ErrForbidden
 	}
 
 	return usr, nil
@@ -206,16 +200,16 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
 		if err == sql.ErrNoRows {
-			return auth.Claims{}, ErrAuthenticationFailure
+			return auth.Claims{}, errors.ErrAuthenticationFailure
 		}
 
-		return auth.Claims{}, errors.Wrap(err, "selecting single user")
+		return auth.Claims{}, errs.Wrap(err, "selecting single user")
 	}
 
 	// Compare the provided password with the saved hash. Use the bcrypt
 	// comparison function so it is cryptographically secure.
 	if err := bcrypt.CompareHashAndPassword(usr.PasswordHash, []byte(password)); err != nil {
-		return auth.Claims{}, ErrAuthenticationFailure
+		return auth.Claims{}, errors.ErrAuthenticationFailure
 	}
 
 	// If we are this far the request is valid. Create some claims for the user
