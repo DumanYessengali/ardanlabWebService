@@ -129,7 +129,7 @@ func (u User) Query(ctx context.Context, traceID string, pageNumber, rowsPerPage
 	const q = `SELECT *FROM users ORDER BY user_id OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY`
 	offset := (pageNumber - 1) * rowsPerPage
 
-	log.Printf("%s : %s query : %s", traceID, "user.Query", database.Log(q, offset, rowsPerPage))
+	u.log.Printf("%s : %s query : %s", traceID, "user.Query", database.Log(q, offset, rowsPerPage))
 
 	users := []Info{}
 

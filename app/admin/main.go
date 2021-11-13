@@ -52,7 +52,7 @@ func migrate() {
 	if err := schema.Seed(db); err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println("seed data completed")
+	fmt.Println("seed data complete")
 }
 
 func tokengen() {
@@ -80,7 +80,7 @@ func tokengen() {
 
 	method := jwt.GetSigningMethod("RS256")
 	tkn := jwt.NewWithClaims(method, claims)
-	tkn.Header["kid"] = "7b5845ca-3436-444b-a128-4ec59481b23a"
+	tkn.Header["kid"] = "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
 	str, err := tkn.SignedString(privateKey)
 	if err != nil {
 		log.Fatalln(err)

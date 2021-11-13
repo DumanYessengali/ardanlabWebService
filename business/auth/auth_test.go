@@ -43,7 +43,7 @@ func TestAuth(t *testing.T) {
 			claims := Claims{
 				StandardClaims: jwt.StandardClaims{
 					Issuer:    "service project",
-					Subject:   "f9e262ed-6b54-4abb-bb05-8ac331cb477c",
+					Subject:   "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1",
 					Audience:  "students",
 					ExpiresAt: time.Now().Add(8760 * time.Hour).Unix(),
 					IssuedAt:  time.Now().Unix(),

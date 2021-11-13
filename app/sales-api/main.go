@@ -56,7 +56,7 @@ func run(log *log.Logger) error {
 			DisableTLS bool   `conf:"default:true"`
 		}
 		Auth struct {
-			KeyID          string `conf:"default:7b5845ca-3436-444b-a128-4ec59481b23a"`
+			KeyID          string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 			PrivateKeyFile string `conf:"default:/service/private.pem"`
 			Algorithm      string `conf:"default:RS256"`
 		}
