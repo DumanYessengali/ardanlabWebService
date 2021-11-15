@@ -3,6 +3,8 @@ package handlers
 import (
 	"github.com/DumanYessengali/ardanlabWebService/business/auth"
 	"github.com/DumanYessengali/ardanlabWebService/business/data/book"
+	"github.com/DumanYessengali/ardanlabWebService/business/data/book_info"
+	"github.com/DumanYessengali/ardanlabWebService/business/data/genre"
 	"github.com/DumanYessengali/ardanlabWebService/business/data/user"
 	"github.com/DumanYessengali/ardanlabWebService/business/mid"
 	"github.com/DumanYessengali/ardanlabWebService/foundation/web"
@@ -43,6 +45,26 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, a *auth.Auth, d
 	app.Handle(http.MethodPost, "/books", bg.create, mid.Authenticate(a))
 	app.Handle(http.MethodPut, "/books/:id", bg.update, mid.Authenticate(a))
 	app.Handle(http.MethodDelete, "/books/:id", bg.delete, mid.Authenticate(a))
+
+	big := bookInfoGroup{
+		bookInfo: book_info.New(log, db),
+		auth:     a,
+	}
+	app.Handle(http.MethodGet, "/books-info/:page/:rows", big.query, mid.Authenticate(a))
+	app.Handle(http.MethodGet, "/books-info/:book_id", big.queryByID, mid.Authenticate(a))
+	app.Handle(http.MethodPost, "/books-info", big.create, mid.Authenticate(a))
+	app.Handle(http.MethodPut, "/books-info/:id", big.update, mid.Authenticate(a))
+	app.Handle(http.MethodDelete, "/books-info/:id", big.delete, mid.Authenticate(a))
+
+	gg := genreGroup{
+		genre: genre.New(log, db),
+		auth:  a,
+	}
+	app.Handle(http.MethodGet, "/genre/:page/:rows", gg.query, mid.Authenticate(a))
+	app.Handle(http.MethodGet, "/genre/:book_id", gg.queryByID, mid.Authenticate(a))
+	app.Handle(http.MethodPost, "/genre", gg.create, mid.Authenticate(a))
+	app.Handle(http.MethodPut, "/genre/:id", gg.update, mid.Authenticate(a))
+	app.Handle(http.MethodDelete, "/genre/:id", gg.delete, mid.Authenticate(a))
 
 	return app
 }

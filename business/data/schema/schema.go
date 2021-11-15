@@ -41,4 +41,32 @@ CREATE TABLE books (
 	PRIMARY KEY (book_id)
 );`,
 	},
+	{
+		Version:     1.3,
+		Description: "Create table book_info",
+		Script: `
+CREATE TABLE book_infos (
+	book_info_id UUID,
+	year         TEXT,
+	price 		 TEXT,
+	quantity 	 INTEGER,
+	book_id      UUID,
+	date_created TIMESTAMP,
+	date_updated TIMESTAMP,
+	PRIMARY KEY (book_info_id)
+);`,
+	},
+	{
+		Version:     1.4,
+		Description: "Create table genre",
+		Script: `
+CREATE TABLE genres (
+	genre_id UUID,
+	name         TEXT,
+	book_id      UUID,
+	date_created TIMESTAMP,
+	date_updated TIMESTAMP,
+	PRIMARY KEY (genre_id)
+);`,
+	},
 }
